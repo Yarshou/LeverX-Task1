@@ -7,20 +7,19 @@ from xml.dom.minidom import parseString
 class FileDump(ABC):
 
     @abstractmethod
-    def write(self, filepath, data):
+    def dump(self, data):
         pass
 
 
 class JSONDump(FileDump):
-
-    def write(self, filepath, data):
-        with open(filepath, 'tw', encoding='UTF-8') as file:
-            return json.dump(data, file, sort_keys=True, indent=2)
+    
+    def dump(self, data):
+        return json.dumps(data, sort_keys=True, indent=2)
 
 
 class XMLDump(FileDump):
 
-    def write(self, filepath, data):
+    def dump(self, data):
 
         rooms = ET.Element('rooms')
 
@@ -50,5 +49,4 @@ class XMLDump(FileDump):
 
         tree = ET.tostring(rooms, encoding='unicode')
 
-        with open('outer_format_files/rooms_sorted.xml', 'w') as file:
-            file.write(parseString(tree).toprettyxml())
+        return parseString(tree).toprettyxml()

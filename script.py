@@ -1,7 +1,6 @@
 import json
 import argparse
 from outer_format import JSONDump, XMLDump
-from time import time
 
 
 def arg_parser():
@@ -9,7 +8,7 @@ def arg_parser():
                                                  'desired format')
     parser.add_argument('students_file_path', type=str, help='Provide a path to students file')
     parser.add_argument('rooms_file_path', type=str, help='Provide a path to rooms file')
-    parser.add_argument('outer_format', type=str, help='Choose an outer format')
+    parser.add_argument('outer_format', type=str, help='Choose an outer format', choices=['xml', 'json'])
 
     return parser
 
@@ -17,11 +16,11 @@ def arg_parser():
 def union_data(students, rooms):
     rooms_sorted = [{'id': rooms[i]['id'], 'name': rooms[i]['name'], 'students': []} for i in range(len(rooms))]
 
-    for i in range(len(students)):
-        rooms_sorted[students[i]['room']]['students'].append({
-            "id": students[i]['id'],
-            "name": students[i]['name'],
-            "room": students[i]['room']
+    for student in students:
+        rooms_sorted[student['room']]['students'].append({
+            "id": student['id'],
+            "name": student['name'],
+            "room": student['room']
         })
 
     return rooms_sorted
@@ -31,24 +30,33 @@ def main(students_path, rooms_path, file_format):
     try:
         with open(students_path) as file_with_studs:
             students = json.load(file_with_studs)
+    except FileNotFoundError as error:
+        print(f'{error.filename} was not found')
+
+    try:
         with open(rooms_path) as file_with_rooms:
             rooms = json.load(file_with_rooms)
     except FileNotFoundError as error:
         print(f'{error.filename} was not found')
+
         return None
 
     data = union_data(students, rooms)
 
     if file_format == 'json':
-        JSONDump.write(JSONDump, 'outer_format_files/rooms_sorted.json', data)
+        with open('outer_format_files/rooms_sorted.json', 'tw', encoding='UTF-8') as file:
+            JSONDumper = JSONDump()
+            file.write(JSONDumper.dump(data))
+
     elif file_format == 'xml':
-        XMLDump.write(XMLDump, 'outer_format_files/rooms_sorted.xml', data)
+        with open('outer_format_files/rooms_sorted.xml', 'w') as file:
+            XMLDumper = XMLDump()
+            file.write(XMLDumper.dump(data))
+
     else:
         raise argparse.ArgumentTypeError('Value has to be json or xml')
 
 
 if __name__ == '__main__':
-    sec = time()
     args = arg_parser().parse_args()
     main(args.students_file_path, args.rooms_file_path, args.outer_format)
-    print(time() - sec)
