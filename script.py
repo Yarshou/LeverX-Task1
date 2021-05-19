@@ -1,6 +1,6 @@
-import json
 import argparse
 from outer_format import JSONDump, XMLDump
+from file_loader import JSONLoad
 
 
 def arg_parser():
@@ -27,34 +27,31 @@ def union_data(students, rooms):
 
 
 def main(students_path, rooms_path, file_format):
-    try:
-        with open(students_path) as file_with_studs:
-            students = json.load(file_with_studs)
-    except FileNotFoundError as error:
-        print(f'{error.filename} was not found')
+    loader = JSONLoad()
 
     try:
-        with open(rooms_path) as file_with_rooms:
-            rooms = json.load(file_with_rooms)
+        students = loader.load(students_path)
     except FileNotFoundError as error:
         print(f'{error.filename} was not found')
+        return None
 
+    try:
+        rooms = loader.load(rooms_path)
+    except FileNotFoundError as error:
+        print(f'{error.filename} was not found')
         return None
 
     data = union_data(students, rooms)
 
     if file_format == 'json':
-        with open('outer_format_files/rooms_sorted.json', 'tw', encoding='UTF-8') as file:
+        with open('outer_format_files/rooms_sorted.json', 'tw+', encoding='UTF-8') as file:
             JSONDumper = JSONDump()
             file.write(JSONDumper.dump(data))
 
     elif file_format == 'xml':
-        with open('outer_format_files/rooms_sorted.xml', 'w') as file:
+        with open('outer_format_files/rooms_sorted.xml', 'w+') as file:
             XMLDumper = XMLDump()
             file.write(XMLDumper.dump(data))
-
-    else:
-        raise argparse.ArgumentTypeError('Value has to be json or xml')
 
 
 if __name__ == '__main__':
